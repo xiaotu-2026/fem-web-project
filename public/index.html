@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有限元分析平台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Microsoft YaHei','SimHei',sans-serif;background:#0a1628;color:#e8e8e8;display:flex;height:100vh;overflow:hidden;}
+#sidebar{width:320px;background:#0d2137;padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;border-right:2px solid #1a5276;}
+#sidebar h2{text-align:center;color:#f4d03f;font-size:18px;margin-bottom:4px;}
+.section{background:#1a3a5c;border-radius:8px;padding:12px;border:1px solid #2471a3;}
+.section h3{font-size:13px;color:#f4d03f;margin-bottom:8px;letter-spacing:1px;}
+.row{display:flex;gap:8px;margin-bottom:6px;align-items:center;}
+.row label{flex:1;font-size:12px;color:#aed6f1;}
+.row input{width:80px;padding:4px 6px;border:1px solid #2471a3;border-radius:4px;background:#0a1628;color:#f0f0f0;font-size:12px;text-align:right;}
+.row input:focus{outline:none;border-color:#f4d03f;}
+button{padding:10px;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;transition:background .2s;font-family:inherit;}
+#btnRun{background:#f4d03f;color:#0a1628;font-size:15px;width:100%;}
+#btnRun:hover{background:#f7dc6f;}
+#btnRun:disabled{background:#555;color:#999;cursor:not-allowed;}
+.view-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.view-btns button{flex:1;min-width:65px;padding:6px;font-size:12px;background:#0a1628;color:#aed6f1;border:1px solid #2471a3;border-radius:4px;}
+.view-btns button.active{background:#2471a3;color:#f4d03f;border-color:#f4d03f;}
+#status{font-size:11px;color:#aed6f1;min-height:40px;line-height:1.5;}
+#canvas-container{flex:1;position:relative;background:#0a1628;}
+canvas#viewport{width:100%;height:100%;display:block;}
+#colorbar{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:24px;height:260px;border:1px solid #2471a3;border-radius:4px;}
+#colorbar-labels{position:absolute;right:52px;top:50%;transform:translateY(-50%);height:260px;display:flex;flex-direction:column;justify-content:space-between;font-size:10px;color:#aed6f1;}
+#legend-title{position:absolute;right:20px;top:calc(50% - 150px);font-size:11px;color:#f4d03f;text-align:right;transform:translateY(-100%);}
+.note{font-size:10px;color:#5dade2;margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="sidebar">
+    <h2>有限元分析平台</h2>
+    <div class="section">
+        <h3>几何参数（长方体）</h3>
+        <div class="row"><label>长度 X (m)</label><input id="inLx" type="number" value="2" step="0.1" min="0.1"></div>
+        <div class="row"><label>宽度 Y (m)</label><input id="inLy" type="number" value="0.5" step="0.1" min="0.1"></div>
+        <div class="row"><label>高度 Z (m)</label><input id="inLz" type="number" value="0.5" step="0.1" min="0.1"></div>
+    </div>
+    <div class="section">
+        <h3>网格划分</h3>
+        <div class="row"><label>X 方向</label><input id="inNx" type="number" value="10" min="1" max="40"></div>
+        <div class="row"><label>Y 方向</label><input id="inNy" type="number" value="4" min="1" max="40"></div>
+        <div class="row"><label>Z 方向</label><input id="inNz" type="number" value="4" min="1" max="40"></div>
+    </div>
+    <div class="section">
+        <h3>材料属性</h3>
+        <div class="row"><label>弹性模量 (Pa)</label><input id="inE" type="number" value="210e9" step="1e9"></div>
+        <div class="row"><label>泊松比 ν</label><input id="inNu" type="number" value="0.3" step="0.01" min="0" max="0.499"></div>
+    </div>
+    <div class="section">
+        <h3>载荷条件</h3>
+        <div class="row"><label>压力 (Pa)</label><input id="inP" type="number" value="1e6" step="1e5"></div>
+        <div class="row"><label>固定面</label><select id="inFixFace" style="flex:1;background:#0a1628;color:#f0f0f0;border:1px solid #2471a3;border-radius:4px;padding:4px;font-size:12px;">
+            <option value="0">X=0 面</option>
+            <option value="1">X=L 面</option>
+            <option value="2">Y=0 面</option>
+            <option value="3">Y=W 面</option>
+            <option value="4">Z=0 面</option>
+            <option value="5">Z=H 面</option>
+        </select></div>
+        <div class="row"><label>加载面</label><select id="inLoadFace" style="flex:1;background:#0a1628;color:#f0f0f0;border:1px solid #2471a3;border-radius:4px;padding:4px;font-size:12px;">
+            <option value="0">X=0 面</option>
+            <option value="1" selected>X=L 面</option>
+            <option value="2">Y=0 面</option>
+            <option value="3">Y=W 面</option>
+            <option value="4">Z=0 面</option>
+            <option value="5">Z=H 面</option>
+        </select></div>
+        <p class="note">固定面施加全约束(Ux=Uy=Uz=0)，加载面施加法向均布压力。</p>
+    </div>
+    <button id="btnRun">运行分析</button>
+    <div class="section">
+        <h3>结果显示</h3>
+        <div class="view-btns">
+            <button id="btnDisp" class="active">位移</button>
+            <button id="btnStrain">应变</button>
+            <button id="btnStress">应力</button>
+            <button id="btnMesh">网格</button>
+        </div>
+    </div>
+    <div id="status">就绪。设置参数后点击"运行分析"。</div>
+</div>
+<div id="canvas-container">
+    <canvas id="viewport"></canvas>
+    <div id="legend-title"></div>
+    <canvas id="colorbar"></canvas>
+    <div id="colorbar-labels"><span id="cb-max"></span><span id="cb-mid"></span><span id="cb-min"></span></div>
+</div>
+<script src="fem_core.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

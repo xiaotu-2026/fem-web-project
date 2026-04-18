@@ -1,16 +1,12 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "public/**", "use": "@vercel/static" }
-  ],
-  "routes": [
+  "outputDirectory": "public",
+  "headers": [
     {
-      "src": "/(.*)",
-      "headers": {
-        "Cross-Origin-Opener-Policy": "same-origin",
-        "Cross-Origin-Embedder-Policy": "require-corp"
-      }
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
     }
-  ],
-  "outputDirectory": "public"
+  ]
 }

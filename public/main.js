@@ -289,10 +289,24 @@ async function runAnalysis(){
     for(var i=0;i<nnz;i++){ci[i]=ci32[i];vals[i]=vf64[i];}
     for(var i=0;i<nDof;i++)rhs[i]=rf64[i];
     var solver=new GpuJacobiSolver();var gpu=await solver.init();
-    log('正在求解（PCG 预条件共轭梯度法）...');
+    var useGpu = gpu && $('inSolver').value === 'gpu';
+    var gpuBadge = $('gpu-badge');
+    if (gpuBadge) {
+        gpuBadge.textContent = useGpu ? 'GPU' : 'CPU';
+        gpuBadge.className = 'gpu-badge ' + (useGpu ? 'gpu-on' : 'gpu-off');
+    }
+    log('正在求解（' + (useGpu ? 'WebGPU' : 'CPU') + ' PCG 预条件共轭梯度法）...');
     var t0=performance.now();
-    var sol=await solver.solveF64(rp,ci,vals,rhs,nDof,20000,1e-8);
+    var sol = useGpu
+        ? await solver.solveF64(rp,ci,vals,rhs,nDof,20000,1e-8)
+        : solver.solveCPU_PCG(rp,ci,vals,rhs,nDof,20000,1e-8);
     var dt=((performance.now()-t0)/1000).toFixed(2);
+    var solverLabel = useGpu && solver.gpuUsed ? 'WebGPU' : 'CPU';
+    if (gpuBadge) {
+        var actualGpu = useGpu && solver.gpuUsed;
+        gpuBadge.textContent = actualGpu ? 'GPU' : 'CPU';
+        gpuBadge.className = 'gpu-badge ' + (actualGpu ? 'gpu-on' : 'gpu-off');
+    }
     for(var i=0;i<nDof;i++)M._setSolution(i,sol[i]);
     M._computeResults(E,nu);
     var d=new Float64Array(nDof);for(var i=0;i<nDof;i++)d[i]=sol[i];
@@ -301,7 +315,7 @@ async function runAnalysis(){
     femData.strain=new Float64Array(M.HEAPF64.buffer,M._getStrainData(),6*nE).slice();
     currentView='disp';updBtns();buildVis('disp');
     var mx=0;for(var i=0;i<nN;i++)mx=Math.max(mx,Math.sqrt(d[3*i]**2+d[3*i+1]**2+d[3*i+2]**2));
-    log('完成。最大位移: '+mx.toExponential(4)+' m，求解耗时: '+dt+' 秒');
+    log('完成（' + solverLabel + '）。最大位移: '+mx.toExponential(4)+' m，求解耗时: '+dt+' 秒');
     $('btnRun').disabled=false;
 }
 
@@ -320,4 +334,13 @@ $('btnRun').onclick=function(){analysisRun=false;femData=null;runAnalysis().catc
 
 // Initial preview on load
 buildPreview();
+if (!navigator.gpu) {
+    var sel = $('inSolver');
+    if (sel) {
+        sel.querySelector('option[value="gpu"]').disabled = true;
+        sel.value = 'cpu';
+    }
+    var badge = $('gpu-badge');
+    if (badge) { badge.textContent = '无GPU'; badge.className = 'gpu-badge gpu-off'; }
+}
 log('就绪。设置参数后点击"运行分析"。调整参数可实时预览模型。');

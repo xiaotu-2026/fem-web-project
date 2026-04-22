@@ -29,11 +29,14 @@ canvas#viewport{width:100%;height:100%;display:block;}
 #colorbar-labels{position:absolute;right:52px;top:50%;transform:translateY(-50%);height:260px;display:flex;flex-direction:column;justify-content:space-between;font-size:10px;color:#aed6f1;}
 #legend-title{position:absolute;right:20px;top:calc(50% - 150px);font-size:11px;color:#f4d03f;text-align:right;transform:translateY(-100%);}
 .note{font-size:10px;color:#5dade2;margin-top:4px;}
+.gpu-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:8px;vertical-align:middle;}
+.gpu-on{background:#27ae60;color:#fff;}
+.gpu-off{background:#7f8c8d;color:#fff;}
 </style>
 </head>
 <body>
 <div id="sidebar">
-    <h2>有限元分析平台</h2>
+    <h2>有限元分析平台 <span id="gpu-badge" class="gpu-badge gpu-off">检测中</span></h2>
     <div class="section">
         <h3>几何参数（长方体）</h3>
         <div class="row"><label>长度 X (m)</label><input id="inLx" type="number" value="2" step="0.1" min="0.1"></div>
@@ -71,6 +74,14 @@ canvas#viewport{width:100%;height:100%;display:block;}
             <option value="5">Z=H 面</option>
         </select></div>
         <p class="note">固定面施加全约束(Ux=Uy=Uz=0)，加载面施加法向均布压力。</p>
+    </div>
+    <div class="section">
+        <h3>求解器</h3>
+        <div class="row"><label>计算方式</label><select id="inSolver" style="flex:1;background:#0a1628;color:#f0f0f0;border:1px solid #2471a3;border-radius:4px;padding:4px;font-size:12px;">
+            <option value="cpu">CPU (Float64)</option>
+            <option value="gpu">WebGPU 加速</option>
+        </select></div>
+        <p class="note">CPU 精度高速度稳定；GPU 在大规模网格下有加速优势。</p>
     </div>
     <button id="btnRun">运行分析</button>
     <div class="section">

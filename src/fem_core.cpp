@@ -214,13 +214,14 @@ void assembleSystem(double E, double nu, double pressure, int fixFace, int loadF
     int loadAxis = 0; // which axis the face is on
     double sign = 1.0;
 
+    // Pressure (P>0) acts along -outward_normal (compressive, pushing into the body)
     switch(loadFace) {
-        case 0: faceArea=Ly_val*Lz_val; loadDir=0; loadAxis=0; loadCoord=0;       sign=-1; break;
-        case 1: faceArea=Ly_val*Lz_val; loadDir=0; loadAxis=0; loadCoord=Lx_val;  sign=1;  break;
-        case 2: faceArea=Lx_val*Lz_val; loadDir=1; loadAxis=1; loadCoord=0;       sign=-1; break;
-        case 3: faceArea=Lx_val*Lz_val; loadDir=1; loadAxis=1; loadCoord=Ly_val;  sign=1;  break;
-        case 4: faceArea=Lx_val*Ly_val; loadDir=2; loadAxis=2; loadCoord=0;       sign=-1; break;
-        case 5: faceArea=Lx_val*Ly_val; loadDir=2; loadAxis=2; loadCoord=Lz_val;  sign=1;  break;
+        case 0: faceArea=Ly_val*Lz_val; loadDir=0; loadAxis=0; loadCoord=0;       sign= 1; break; // X=0: outward -X, force +X
+        case 1: faceArea=Ly_val*Lz_val; loadDir=0; loadAxis=0; loadCoord=Lx_val;  sign=-1; break; // X=L: outward +X, force -X
+        case 2: faceArea=Lx_val*Lz_val; loadDir=1; loadAxis=1; loadCoord=0;       sign= 1; break; // Y=0: outward -Y, force +Y
+        case 3: faceArea=Lx_val*Lz_val; loadDir=1; loadAxis=1; loadCoord=Ly_val;  sign=-1; break; // Y=W: outward +Y, force -Y
+        case 4: faceArea=Lx_val*Ly_val; loadDir=2; loadAxis=2; loadCoord=0;       sign= 1; break; // Z=0: outward -Z, force +Z
+        case 5: faceArea=Lx_val*Ly_val; loadDir=2; loadAxis=2; loadCoord=Lz_val;  sign=-1; break; // Z=H: outward +Z, force -Z
     }
 
     // Count nodes on load face
